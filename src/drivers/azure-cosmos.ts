@@ -113,10 +113,10 @@ export default defineDriver((opts: AzureCosmosOptions) => {
         .delete<AzureCosmosItem>({ consistencyLevel: "Session" });
     },
     async getKeys() {
-      const iterator = (await getCosmosClient()).items.query<AzureCosmosItem>(
-        `SELECT { id } from c`
+      const iterator = (await getCosmosClient()).items.query<string>(
+        `SELECT VALUE c.id from c`
       );
-      return (await iterator.fetchAll()).resources.map((item) => item.id);
+      return (await iterator.fetchAll()).resources;
     },
     async getMeta(key) {
       const item = await (await getCosmosClient())
@@ -129,13 +129,13 @@ export default defineDriver((opts: AzureCosmosOptions) => {
       };
     },
     async clear() {
-      const iterator = (await getCosmosClient()).items.query<AzureCosmosItem>(
-        `SELECT { id } from c`
+      const iterator = (await getCosmosClient()).items.query<string>(
+        `SELECT VALUE c.id from c`
       );
-      const items = (await iterator.fetchAll()).resources;
-      for (const item of items) {
+      const keys = (await iterator.fetchAll()).resources;
+      for (const key of keys) {
         await (await getCosmosClient())
-          .item(item.id)
+          .item(key)
           .delete<AzureCosmosItem>({ consistencyLevel: "Session" });
       }
     },
